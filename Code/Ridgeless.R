@@ -61,7 +61,7 @@ for(i in 1:length(rank_vec)){
   
   # The following is too slow when n_prods is large
   # u_pool_Linear1 = getPooledU(pool_idx, "Linear", n_prods, n_experts, f_comb, u_comb, true_data)
-  u_pool_Linear = getPooledUFast(pool_idx, n_prods, n_experts, u_comb, true_comb)
+  u_pool_Linear = suppressMessages(getPooledUFast(pool_idx, n_prods, n_experts, u_comb, true_comb))
   
   L2_pool = apply(u_pool_Linear, 1, function(x) mean(x^2))
   
@@ -74,12 +74,8 @@ for(i in 1:length(rank_vec)){
   
   X_mat = as.matrix(t(u_comb) %*% Gamma)
   
-  ridge0_test_err_std = map_dfc(1:nrow(X_mat), ~ getRidge0TestErr(X_mat[-.x,], Y_mat[-.x,], X_mat[.x,,drop = FALSE],
-                                                                  Y_mat[.x,,drop = FALSE], stdize = TRUE))
-  
-  ridge0_test_err_nostd = map_dfc(1:nrow(X_mat), ~ getRidge0TestErr(X_mat[-.x,], Y_mat[-.x,], X_mat[.x,,drop = FALSE],
-                                                                    Y_mat[.x,,drop = FALSE], stdize = FALSE))
-  
+  ridge0_test_err_std = suppressMessages(map_dfc(1:nrow(X_mat), ~ getRidge0TestErr(X_mat[-.x,], Y_mat[-.x,], X_mat[.x,,drop = FALSE],
+                                                                  Y_mat[.x,,drop = FALSE], stdize = TRUE)))
   
   L2_ridge0_std = apply(ridge0_test_err_std, 1, function(x) mean(x^2))
   
@@ -149,7 +145,7 @@ for(i in 1:length(rank_vec)){
   
   # The following is too slow when n_prods is large
   # u_pool_Linear1 = getPooledU(pool_idx, "Linear", n_prods, n_experts, f_comb, u_comb, true_data)
-  u_pool_Linear = getPooledUFast(pool_idx, n_prods, n_experts, u_comb, true_comb)
+  u_pool_Linear = suppressMessages(getPooledUFast(pool_idx, n_prods, n_experts, u_comb, true_comb))
   
   L2_pool = apply(u_pool_Linear, 1, function(x) mean(x^2))
   
@@ -162,8 +158,8 @@ for(i in 1:length(rank_vec)){
   
   X_mat = as.matrix(t(u_comb) %*% Gamma)
   
-  ridge0_test_err_std = map_dfc(1:nrow(X_mat), ~ getRidge0TestErr(X_mat[-.x,], Y_mat[-.x,], X_mat[.x,,drop = FALSE],
-                                                                  Y_mat[.x,,drop = FALSE], stdize = TRUE))
+  ridge0_test_err_std = suppressMessages(map_dfc(1:nrow(X_mat), ~ getRidge0TestErr(X_mat[-.x,], Y_mat[-.x,], X_mat[.x,,drop = FALSE],
+                                                                  Y_mat[.x,,drop = FALSE], stdize = TRUE)))
   
   
   L2_ridge0_std = apply(ridge0_test_err_std, 1, function(x) mean(x^2))
