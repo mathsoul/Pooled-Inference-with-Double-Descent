@@ -30,8 +30,7 @@ df4plot_long$Method = factor(df4plot_long$Method,
 plot_monthly1 = ggplot(df4plot_long%>% filter(Method == "S:EW", dataset == "Monthly1"), aes(x = Method, y = Ratio)) +
   geom_boxplot(outlier.alpha = 0.05, width = 0.3) + coord_cartesian(ylim = c(0,ylim_upper)) + geom_hline(yintercept = 1, col = 'red') + 
   theme_bw() + ylab("Loss Ratio (EW/Ours)") + theme_slides + #theme(text=element_text(size=25), legend.position = "top") + 
-  scale_x_discrete(breaks = NULL) + scale_y_continuous(breaks = 0:7) + # Removes x-axis labels and ticks
-  labs(x = NULL)
+  scale_x_discrete(breaks = NULL) + scale_y_continuous(breaks = 0:7) # Removes x-axis labels and ticks
 
 print(plot_monthly1)
 
@@ -58,4 +57,4 @@ plot_top8 = ggplot(df4plot_long %>% filter(Method %in% separate_methods), aes(x 
   theme_bw() + theme(legend.position = "top") + theme_slides + ylab("Loss Ratio (Benchmarks/P:Ridgeless)") + xlab("Benchmarks") + scale_y_continuous(breaks = 0:7)
 
 
-plot_top8 + facet_wrap(~ dataset, nrow = 4)
+print(plot_top8 + facet_wrap(~ dataset, nrow = 4))
