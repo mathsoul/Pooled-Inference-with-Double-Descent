@@ -6,8 +6,6 @@ library(data.table)
 # library(pls)
 source("Code/func.R")
 
-# Delete the ones with missing data
-
 target_week = "1 wk ahead"; PCA_threshold = 0.8 # Figure ?
 # target_week = "1 wk ahead"; PCA_threshold = 0.7 # Figure ?
 # target_week = "2 wk ahead"; PCA_threshold = 0.8 # Figure ?
