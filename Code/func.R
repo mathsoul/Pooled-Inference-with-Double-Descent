@@ -1,3 +1,37 @@
+getSepTestL2 = function(df_train_sep, df_test_sep, method){
+  mean_train = colMeans(df_train_sep)
+  
+  if(method == "S:Linear"){
+    cov_est = linshrink_cov(df_train_sep)
+  }
+  
+  if(method == "S:Cor"){
+    cov_est = getConstCorCov(df_train_sep)
+  }
+  
+  if(method == "S:Var"){
+    cov_est = diag(diag(cov(df_train_sep)) + 1e-10) #some experts have 0 variance
+  }
+  
+  w = rowSums(solve(cov_est))
+  w = w/sum(w)
+  
+  df_test_sep_demean = t(t(df_test_sep) - mean_train)
+  
+  err_vec = df_test_sep_demean %*% w
+  
+  mean(err_vec^2)
+}
+
+prepareFluData = function(df, which_season){
+  df_1season = df %>% filter(Season == which_season) %>% dplyr::select(location, model_name, Model.Week, err) %>% 
+    arrange(Model.Week) %>% pivot_wider(names_from = Model.Week, values_from = err) %>% arrange(location, model_name)
+  
+  colnames(df_1season)[3:ncol(df_1season)] = paste0(which_season, "/", colnames(df_1season)[3:ncol(df_1season)])
+  
+  df_1season
+}
+
 getRidge0TestErr = function(X_train, Y_train, X_test, Y_test, stdize = TRUE, n_experts = 17){
   n_train = nrow(X_train)
   n_prods = ncol(X_train)/(n_experts - 1)
@@ -78,7 +112,43 @@ getRidge0TestErrSim = function(X_train, Y_train, X_test, Y_test, stdize = TRUE, 
   
   err_test = Y_test - t(t(Y_pred) + y_mu_train)
   
-  err_test
+  t(as.matrix(err_test))
+}
+
+getPCRTestErr = function(X_train, Y_train, X_test, Y_test, threshold = 0.75){
+  n_train = nrow(Y_train)
+  n_variable = ncol(Y_train)
+  n_covariates = ncol(X_train)
+  n_test = nrow(Y_test)
+  
+  if (n_train > n_covariates) {
+    stop("it is not in the modern regime")
+  }
+  
+  X_mu_train = colMeans(X_train)
+  y_mu_train = colMeans(Y_train)
+  
+  X_sd_train = apply(X_train, 2, sd)
+  X_sd_train = replaceZeroWOne(X_sd_train) #some standard deviations are exactly 0
+  
+  X_train_scaled = t((t(X_train)-X_mu_train)/X_sd_train)
+  Y_train_demean = t((t(Y_train)-y_mu_train))
+  
+  svd_train = svd(X_train_scaled)
+  pct_sum = cumsum(svd_train$d^2)/sum(svd_train$d^2)
+  PCA_idx = 1:min(which(pct_sum > threshold))
+  # non_zero_idx = 1:(n_train-1)
+  
+  VDinv = svd_train$v[,PCA_idx,drop = FALSE] %*% diag(1/svd_train$d[PCA_idx])
+  UTY = t(svd_train$u[,PCA_idx]) %*% Y_train_demean #demean or without demean generates the same solution
+  
+  # VDinv %*% UTY could be replaced by t(X_train_scaled) %*% ginv(X_train_scaled %*% t(X_train_scaled)) %*% Y_train_demean
+  
+  Y_pred = t((t(X_test) - X_mu_train)/X_sd_train) %*% VDinv %*% UTY
+  
+  err_test = Y_test - t(t(Y_pred) + y_mu_train)
+  
+  t(as.matrix(err_test))
 }
 
 
@@ -89,13 +159,18 @@ replaceZeroWOne = function(x_vec){
 
 
 getGamma0 = function(n_experts){
-  origin_mat = diag(n_experts) - 1/n_experts #1/n_experts = 1/n_experts * one_vec %*% t(one_vec)
-  scaled_mat = apply(origin_mat, 2, function(x) x/sqrt(sum(x^2)))
+  root_mat = diag(n_experts) - 1/n_experts #1/n_experts = 1/n_experts * one_vec %*% t(one_vec)
   
-  scaled_mat[,1:(n_experts-1)]
+  Gamma0_raw = root_mat[, 1:(n_experts - 1)]
+  A = t(Gamma0_raw) %*% Gamma0_raw
+  eig = eigen(A)
+  A_inv_half =
+    eig$vectors %*%
+    diag(1 / sqrt(eig$values)) %*%
+    t(eig$vectors)
+  
+  Gamma0 = Gamma0_raw %*% A_inv_half
 }
-
-
 
 getTimeSeriesNames = function(data_freq, rank_idx){
   df = read.csv("CleanedData/M4ScaledData/M4-info.csv")
