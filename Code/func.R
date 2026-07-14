@@ -98,7 +98,7 @@ getGamma0 = function(n_experts){
 
 
 getTimeSeriesNames = function(data_freq, rank_idx){
-  df = read.csv("ScaledData/M4-info.csv")
+  df = read.csv("CleanedData/M4ScaledData/M4-info.csv")
   
   df_sub = df %>% filter(SP == data_freq)
                              
@@ -112,7 +112,7 @@ getTimeSeriesNames = function(data_freq, rank_idx){
 }
 
 getTimeSeriesCats = function(data_freq, rank_idx){
-  df = read.csv("ScaledData/M4-info.csv")
+  df = read.csv("CleanedData/M4ScaledData/M4-info.csv")
   
   df_sub = df %>% filter(SP == data_freq)
   

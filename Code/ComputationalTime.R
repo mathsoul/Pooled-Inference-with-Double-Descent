@@ -17,9 +17,9 @@ time_mat = matrix(NA, nrow = 8, ncol = 2,
 # Monthly Computational Time ----------------------------------------------
 data_freq = "Monthly"
 
-f_data = fread(paste0("ScaledData/", data_freq, "_forecast.csv")) %>% dplyr::select(-V1)
-true_data = fread(paste0("ScaledData/", data_freq, "_truth.csv")) %>% dplyr::select(-V1)
-u_data = fread(paste0("ScaledData/", data_freq, "_err.csv")) %>% dplyr::select(-V1)
+f_data = fread(paste0("CleanedData/M4ScaledData/", data_freq, "_forecast.csv")) %>% dplyr::select(-V1)
+true_data = fread(paste0("CleanedData/M4ScaledData/", data_freq, "_truth.csv")) %>% dplyr::select(-V1)
+u_data = fread(paste0("CleanedData/M4ScaledData/", data_freq, "_err.csv")) %>% dplyr::select(-V1)
 
 rank_vec = 1:7
 
@@ -77,9 +77,9 @@ for(i in rank_vec){
 # Daily Computational Time ------------------------------------------------
 data_freq = "Daily"
 
-f_data = fread(paste0("ScaledData/", data_freq, "_forecast.csv")) %>% dplyr::select(-V1)
-true_data = fread(paste0("ScaledData/", data_freq, "_truth.csv")) %>% dplyr::select(-V1)
-u_data = fread(paste0("ScaledData/", data_freq, "_err.csv")) %>% dplyr::select(-V1)
+f_data = fread(paste0("CleanedData/M4ScaledData/", data_freq, "_forecast.csv")) %>% dplyr::select(-V1)
+true_data = fread(paste0("CleanedData/M4ScaledData/", data_freq, "_truth.csv")) %>% dplyr::select(-V1)
+u_data = fread(paste0("CleanedData/M4ScaledData/", data_freq, "_err.csv")) %>% dplyr::select(-V1)
 
 
 time_series_names = getTimeSeriesNames(data_freq, 1)

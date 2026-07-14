@@ -22,9 +22,9 @@ all_functions <- all_objects[sapply(mget(all_objects, envir = .GlobalEnv), is.fu
 # Monthly Data ------------------------------------------------------------
 data_freq = "Monthly"
 
-f_data = fread(paste0("ScaledData/", data_freq, "_forecast.csv")) %>% dplyr::select(-V1)
-true_data = fread(paste0("ScaledData/", data_freq, "_truth.csv")) %>% dplyr::select(-V1)
-u_data = fread(paste0("ScaledData/", data_freq, "_err.csv")) %>% dplyr::select(-V1)
+f_data = fread(paste0("CleanedData/M4ScaledData/", data_freq, "_forecast.csv")) %>% dplyr::select(-V1)
+true_data = fread(paste0("CleanedData/M4ScaledData/", data_freq, "_truth.csv")) %>% dplyr::select(-V1)
+u_data = fread(paste0("CleanedData/M4ScaledData/", data_freq, "_err.csv")) %>% dplyr::select(-V1)
 
 rank_vec = 1:68
 
@@ -112,9 +112,9 @@ save(ratio_mat, file = paste0("Result/", data_freq, "From", min(rank_vec), "To",
 # Daily Data --------------------------------------------------------------
 data_freq = "Daily"
 
-f_data = fread(paste0("ScaledData/", data_freq, "_forecast.csv")) %>% dplyr::select(-V1)
-true_data = fread(paste0("ScaledData/", data_freq, "_truth.csv")) %>% dplyr::select(-V1)
-u_data = fread(paste0("ScaledData/", data_freq, "_err.csv")) %>% dplyr::select(-V1)
+f_data = fread(paste0("CleanedData/M4ScaledData/", data_freq, "_forecast.csv")) %>% dplyr::select(-V1)
+true_data = fread(paste0("CleanedData/M4ScaledData/", data_freq, "_truth.csv")) %>% dplyr::select(-V1)
+u_data = fread(paste0("CleanedData/M4ScaledData/", data_freq, "_err.csv")) %>% dplyr::select(-V1)
 
 rank_vec = 1:2
 
