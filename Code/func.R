@@ -163,18 +163,28 @@ replaceZeroWOne = function(x_vec){
 }
 
 
-getGamma0 = function(n_experts){
-  root_mat = diag(n_experts) - 1/n_experts #1/n_experts = 1/n_experts * one_vec %*% t(one_vec)
-  
-  Gamma0_raw = root_mat[, 1:(n_experts - 1)]
-  A = t(Gamma0_raw) %*% Gamma0_raw
-  eig = eigen(A)
-  A_inv_half =
-    eig$vectors %*%
-    diag(1 / sqrt(eig$values)) %*%
-    t(eig$vectors)
-  
-  Gamma0 = Gamma0_raw %*% A_inv_half
+getGamma0 = function(n_experts, type = "permute invariant"){
+  if (type == "permute invariant") {
+    root_mat = diag(n_experts) - 1/n_experts #1/n_experts = 1/n_experts * one_vec %*% t(one_vec)
+    
+    Gamma0_raw = root_mat[, 1:(n_experts - 1)]
+    A = t(Gamma0_raw) %*% Gamma0_raw
+    eig = eigen(A)
+    A_inv_half =
+      eig$vectors %*%
+      diag(1 / sqrt(eig$values)) %*%
+      t(eig$vectors)
+    
+    Gamma0 = Gamma0_raw %*% A_inv_half
+  } else {
+    Gamma0 = matrix(0, nrow = n_experts, ncol = n_experts - 1)
+    
+      for(k in 1:(n_experts - 1)){
+        Gamma0[1:k, k] = 1 / sqrt(k * (k + 1))
+        Gamma0[k + 1, k] = -k / sqrt(k * (k + 1))
+      }
+      Gamma0
+  }
 }
 
 getTimeSeriesNames = function(data_freq, rank_idx){
@@ -404,5 +414,54 @@ extractNSub <- function(input_string) {
   match <- regmatches(input_string, regexpr("Idx(\\d+)", input_string))
   number <- as.numeric(sub("Idx", "", match))
   return(number)
+}
+
+
+getTWFE_R2 = function(var_mat){
+  log_mat = log(var_mat)
+  n_contrasts = nrow(var_mat)
+  n_prods = ncol(var_mat)
+
+  row_means = rowMeans(log_mat)
+  col_means = colMeans(log_mat)
+  grand_mean = mean(log_mat)
+
+  fitted = outer(row_means, col_means, function(r, c) r + c - grand_mean)
+  resid = log_mat - fitted
+
+  ss_tot = sum((log_mat - grand_mean)^2)
+  ss_res = sum(resid^2)
+  r2 = 1 - ss_res / ss_tot
+
+  n_obs = n_prods * n_contrasts
+  n_params = (n_prods - 1) + (n_contrasts - 1)
+  df_resid = n_obs - n_params - 1
+  adj_r2 = 1 - (1 - r2) * (n_obs - 1) / df_resid
+
+  c(R2 = r2, adjR2 = adj_r2)
+}
+
+computeVarMat = function(err_mat, n_experts, n_prods){
+  n_periods = ncol(err_mat)
+
+  Gamma0 = getGamma0(n_experts)
+  Gamma = Matrix(diag(n_prods), sparse = TRUE) %x% Gamma0
+
+  X_mat = as.matrix(t(err_mat) %*% Gamma)
+  X_mat = scale(X_mat, center = TRUE, scale = FALSE)
+
+  var_vec = colSums(X_mat^2) / n_periods
+  matrix(var_vec, nrow = n_experts - 1, ncol = n_prods)
+}
+
+prepareM4Scenario = function(data_freq, rank_idx, u_data){
+  ids = getTimeSeriesNames(data_freq, rank_idx)
+  n_prods = length(ids)
+  err_mat = as.matrix(
+    u_data %>% filter(id %in% ids) %>%
+      arrange(as.numeric(gsub("\\D", "", id))) %>%
+      dplyr::select(-id, -group_id)
+  )
+  list(err_mat = err_mat, n_prods = n_prods)
 }
 
