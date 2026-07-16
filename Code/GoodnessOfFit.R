@@ -40,8 +40,6 @@ theme_slides = theme(text = element_text(size = 15), legend.position = "top")
 
 csv_path = "CleanedData/FluForecasting/point_ests_adj-w20172018.csv"
 
-## --- 1 wk ahead ------------------------------------------------------------
-
 # Keep 1-week-ahead forecasts and the 10 HHS regions (drop the "US National"
 # aggregate). Exclude ReichLab_kde, UTAustin_edm (has a 13-week submission
 # gap in the 2017/2018 season), and the six ensemble/weighting pseudo-models,
@@ -53,6 +51,14 @@ df = fread(csv_path) %>%
                              "target-and-region-based-weights",
                              "target-based-weights",
                              "target-type-based-weights"))
+
+# df = fread(csv_path) %>%
+#   filter(target == "2 wk ahead", location != "US National",
+#          !model_name %in% c("ReichLab_kde", "UTAustin_edm",
+#                             "constant-weights", "equal-weights",
+#                             "target-and-region-based-weights",
+#                             "target-based-weights",
+#                             "target-type-based-weights"))
 
 locations = sort(unique(df$location))
 n_prods = length(locations)          # 10 HHS regions ("products")
@@ -80,15 +86,18 @@ for(season in seasons){
 
   cat(sprintf("Flu 1 wk ahead season %s: n_experts=%d n_prods=%d weeks=%d R2=%.4f adjR2=%.4f\n",
               season, n_experts, n_prods, ncol(err_mat), r2_vec["R2"], r2_vec["adjR2"]))
+  
+  # cat(sprintf("Flu 2 wk ahead season %s: n_experts=%d n_prods=%d weeks=%d R2=%.4f adjR2=%.4f\n",
+  #             season, n_experts, n_prods, ncol(err_mat), r2_vec["R2"], r2_vec["adjR2"]))
 }
 
-r2_df_flu_1wk = do.call(rbind, results)
-rownames(r2_df_flu_1wk) = NULL
-r2_df_flu_1wk$Season = factor(r2_df_flu_1wk$Season, levels = seasons)
+r2_df_flu = do.call(rbind, results)
+rownames(r2_df_flu) = NULL
+r2_df_flu$Season = factor(r2_df_flu$Season, levels = seasons)
 
 # Bar chart: one adjusted R^2 per season (a boxplot doesn't apply here since
 # there's only a single number per season, not a distribution).
-p_bar = ggplot(r2_df_flu_1wk, aes(x = Season, y = adjR2)) +
+p_bar = ggplot(r2_df_flu, aes(x = Season, y = adjR2)) +
   geom_col(fill = "grey70", color = "black") +
   geom_text(aes(label = round(adjR2, 3)), vjust = -0.5, size = 4) +
   theme_bw() + theme_slides +
@@ -98,55 +107,6 @@ p_bar = ggplot(r2_df_flu_1wk, aes(x = Season, y = adjR2)) +
 
 print(p_bar)
 ggsave("Result/FluGoodnessOfFit_bySeason_bar.pdf", plot = p_bar, width = 9, height = 6)
-
-## --- 2 wk ahead (same steps as 1 wk ahead above, target swapped) -----------
-
-df = fread(csv_path) %>%
-  filter(target == "2 wk ahead", location != "US National",
-         !model_name %in% c("ReichLab_kde", "UTAustin_edm",
-                             "constant-weights", "equal-weights",
-                             "target-and-region-based-weights",
-                             "target-based-weights",
-                             "target-type-based-weights"))
-
-locations = sort(unique(df$location))
-n_prods = length(locations)
-seasons = sort(unique(df$Season))
-
-results = list()
-for(season in seasons){
-  wide = prepareFluData(df, season)
-  n_experts = length(unique(wide$model_name))
-
-  err_mat = wide %>% dplyr::select(-location, -model_name) %>% as.matrix()
-
-  var_mat = computeVarMat(err_mat, n_experts, n_prods)
-  r2_vec = getTWFE_R2(var_mat)
-
-  results[[season]] = data.frame(
-    Season = season, n_experts = n_experts, n_prods = n_prods,
-    n_periods = ncol(err_mat), R2 = r2_vec["R2"], adjR2 = r2_vec["adjR2"]
-  )
-
-  cat(sprintf("Flu 2 wk ahead season %s: n_experts=%d n_prods=%d weeks=%d R2=%.4f adjR2=%.4f\n",
-              season, n_experts, n_prods, ncol(err_mat), r2_vec["R2"], r2_vec["adjR2"]))
-}
-
-r2_df_flu_2wk = do.call(rbind, results)
-rownames(r2_df_flu_2wk) = NULL
-r2_df_flu_2wk$Season = factor(r2_df_flu_2wk$Season, levels = seasons)
-
-## --- 1 wk vs 2 wk ahead adjusted R^2, side by side -------------------------
-
-r2_df_flu = data.frame(
-  Season = r2_df_flu_1wk$Season,
-  adjR2_1wk = round(r2_df_flu_1wk$adjR2, 3),
-  adjR2_2wk = round(r2_df_flu_2wk$adjR2, 3)
-)
-
-print(r2_df_flu)
-write.csv(r2_df_flu, "Result/FluGoodnessOfFit_1wkVs2wk.csv", row.names = FALSE)
-
 
 ## ----------------------------------------------------------------------------
 ## M4 dataset
