@@ -1,2 +1,4 @@
 ## Details of the M4 Dataset
-We downloaded the raw data of the M4 competition from [Here](https://github.com/Mcompetitions/M4-methods). We scaled the data according to the scaling used in mean absolute scaled error (MASE) documented in [Makridakis et al. (2020)](https://doi.org/10.1016/j.ijforecast.2019.04.014). The scaled datasets are stored in the ScaledData folder.
+We downloaded the raw data of the M4 competition from [Here](https://github.com/Mcompetitions/M4-methods). We scaled the data according to the scaling used in mean absolute scaled error (MASE) documented in [Makridakis et al. (2020)](https://doi.org/10.1016/j.ijforecast.2019.04.014). The scaled datasets are stored in the CleanedData folder.
+
+We downloaded the flu forecast dataset from [Here](https://zenodo.org/records/1255023). 
