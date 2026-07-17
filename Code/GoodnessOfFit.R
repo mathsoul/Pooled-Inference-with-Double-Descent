@@ -1,26 +1,12 @@
 ## ============================================================================
-## GoodnessOfFit.R
-##
 ## Tests whether the log-variance of pairwise expert forecast-error contrasts
-## decomposes additively into a "product" effect and an "expert-contrast"
-## effect, via a two-way-fixed-effects (TWFE) regression:
+## decomposes additively into a variable effect and an expert effect, via a 
+## two-way-fixed-effects (TWFE) regression:
 ##
-##     log( var(x_{n,m}) ) = grand_mean + row_effect[n] + col_effect[m] + resid
+##     log( var(x_{m,n}) ) = grand_mean + variable_effect[m] + expert_effect[n] + resid
 ##
-## where m indexes "products" (an M4 time series, or an HHS region for flu)
-## and n indexes one of the (n_experts - 1) orthogonal contrasts among the
-## experts forecasting that product. Helper functions live in Code/func.R:
-## getTWFE_R2 and computeVarMat are new here; prepareFluData, getTimeSeriesNames,
-## and getGamma0 already existed and are reused as-is; prepareM4Scenario is a
-## new function factoring out the u_comb-building pattern also used inline in
-## M4Ridgeless.R. Run with the working directory set to the project root.
-##
-## Runs both datasets in turn:
-##   - flu: CDC flu-forecast data, one adjusted R^2 PER SEASON (8 seasons),
-##          computed separately for the 1 wk ahead and 2 wk ahead targets
-##          -> bar chart (1 wk ahead) + printed 1wk-vs-2wk table
-##   - M4 : M4 competition data, one adjusted R^2 PER SCENARIO (68 monthly
-##          + 2 daily = 70 scenarios) -> histogram
+## where m indexes variable (an M4 time series, or an HHS region for flu)
+## and n indexes one of the expert
 ## ============================================================================
 
 library(tidyverse)
@@ -29,10 +15,7 @@ library(data.table)
 
 source("Code/func.R")
 
-# theme_slides isn't in func.R (each plotting script defines its own copy,
-# following the convention already used in Code/M4Plot.R).
 theme_slides = theme(text = element_text(size = 15), legend.position = "top")
-
 
 ## ----------------------------------------------------------------------------
 ## Flu dataset
@@ -40,10 +23,6 @@ theme_slides = theme(text = element_text(size = 15), legend.position = "top")
 
 csv_path = "CleanedData/FluForecasting/point_ests_adj-w20172018.csv"
 
-# Keep 1-week-ahead forecasts and the 10 HHS regions (drop the "US National"
-# aggregate). Exclude ReichLab_kde, UTAustin_edm (has a 13-week submission
-# gap in the 2017/2018 season), and the six ensemble/weighting pseudo-models,
-# so every remaining model has a complete panel every season.
 df = fread(csv_path) %>%
   filter(target == "1 wk ahead", location != "US National",
          !model_name %in% c("ReichLab_kde", "UTAustin_edm",
@@ -70,13 +49,7 @@ for(season in seasons){
   n_experts = length(unique(wide$model_name))
 
   err_mat = wide %>% dplyr::select(-location, -model_name) %>% as.matrix()
-
-  # computeVarMat() projects each region's n_experts-dim error vector onto
-  # the (n_experts-1)-dim contrast space via Gamma0, then returns the
-  # resulting n_contrasts x n_prods matrix of variances over time.
   var_mat = computeVarMat(err_mat, n_experts, n_prods)
-  # getTWFE_R2() fits log(var_mat) ~ region + contrast and returns that
-  # fit's R^2 and adjusted R^2.
   r2_vec = getTWFE_R2(var_mat)
 
   results[[season]] = data.frame(
@@ -95,8 +68,6 @@ r2_df_flu = do.call(rbind, results)
 rownames(r2_df_flu) = NULL
 r2_df_flu$Season = factor(r2_df_flu$Season, levels = seasons)
 
-# Bar chart: one adjusted R^2 per season (a boxplot doesn't apply here since
-# there's only a single number per season, not a distribution).
 p_bar = ggplot(r2_df_flu, aes(x = Season, y = adjR2)) +
   geom_col(fill = "grey70", color = "black") +
   geom_text(aes(label = round(adjR2, 3)), vjust = -0.5, size = 4) +
@@ -122,8 +93,6 @@ for(data_freq in c("Monthly", "Daily")){
   n_scenarios = if(data_freq == "Monthly") 68 else 2
 
   for(rank_idx in 1:n_scenarios){
-    # prepareM4Scenario() builds the block-stacked error matrix for one
-    # scenario: n_prods M4 series, n_experts consecutive rows per series.
     prep = prepareM4Scenario(data_freq, rank_idx, u_data)
     var_mat = computeVarMat(prep$err_mat, n_experts, prep$n_prods)
     r2_vec = getTWFE_R2(var_mat)
@@ -154,3 +123,11 @@ p_hist = ggplot(r2_df_m4, aes(x = adjR2)) +
 
 print(p_hist)
 ggsave("Result/M4GoodnessOfFit_histogram.pdf", plot = p_hist, width = 8, height = 6)
+
+# Scatterplot of adjusted R^2 values (y) vs M (x).
+p_scatter = ggplot(r2_df_m4, aes(x = n_prods, y = adjR2)) +
+  geom_point() + coord_cartesian(xlim = c(100,10000)) + 
+  theme_bw() + theme_slides + scale_x_log10() + 
+  ylab("Adjusted R2") + xlab("Number of Varibles") + annotation_logticks(sides = "b")
+
+print(p_scatter)
