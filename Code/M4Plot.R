@@ -12,25 +12,17 @@ theme_slides = theme(text=element_text(size=15),
                      legend.position = "top")
 
 
-load("Result/MonthlyFrom1To68.Rdata")
-ratio_all = data.frame(ratio_mat)
-
-load("Result/DailyFrom1To2.Rdata")
-ratio_all = data.frame(rbind(ratio_all,
-                             ratio_mat))
-
-load("Result/HourlyFrom1To1.Rdata")
-ratio_all = data.frame(rbind(ratio_all,
-                             ratio_mat))
+load("Result/M4.Rdata")
+ratio_all = ratio_mat
 
 separate_methods = c("S:EW", "S:Linear", "S:Cor", "S:Var")
 
-colnames(ratio_all)[1:7] = c("P:Linear", "P:PCR80", "P:PCR70", separate_methods)
+colnames(ratio_all)[1:8] = c("P:Linear", "P:PCR80", "P:PCR70", "P:GammaSeqDiff", separate_methods)
 
 df4plot_long = pivot_longer(ratio_all, cols = `P:Linear`:`S:Var`,
                             values_to = "Ratio", names_to = "Method")
 df4plot_long$Method = factor(df4plot_long$Method, 
-                             levels = c("P:Linear", "P:PCR80", "P:PCR70", "S:EW", "S:Var", "S:Cor", "S:Linear"))
+                             levels = c("P:Linear", "P:PCR80", "P:PCR70", "P:GammaSeqDiff", "S:EW", "S:Var", "S:Cor", "S:Linear"))
 
 # Figure 2
 plot_monthly1 = ggplot(df4plot_long%>% filter(Method == "S:EW", dataset == "Monthly1"), aes(x = Method, y = Ratio)) +
@@ -127,3 +119,19 @@ print(plot_linear_overall)
 pdf("Figures/M4PCR.pdf")
 print(plot_linear_overall) 
 dev.off()
+
+# Figure: P:GammaSeqDiff vs P:Ridgeless (M4 datasets)
+plot_linear_overall = ggplot(df4plot_long %>% filter(Method %in% c("P:GammaSeqDiff") & dataset != 'Hourly1'),
+                             aes(x = Method, y = Ratio)) +
+  geom_boxplot(outlier.alpha = 0.05, width = 0.3) + coord_cartesian(ylim = c(ylim_lower,ylim_upper)) + geom_hline(yintercept = 1, col = 'red') +
+  theme_bw() + ylab("Loss Ratio (Pooled Methods/P:Ridgeless)") + theme_slides +
+  scale_x_discrete() +
+  scale_y_log10() + 
+  annotation_logticks(sides = "l")
+
+print(plot_linear_overall)
+
+pdf("Figures/M4SeqDiff.pdf")
+print(plot_linear_overall) 
+dev.off()
+
