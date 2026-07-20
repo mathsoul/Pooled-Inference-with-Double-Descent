@@ -115,7 +115,7 @@ p_hist = ggplot(r2_df_m4, aes(x = adjR2)) +
   xlab("Adjusted R2") + ylab("Count")
 
 print(p_hist)
-ggsave("Result/M4GoodnessOfFit_histogram.pdf", plot = p_hist, width = 8, height = 6)
+ggsave("Figures/M4GoodnessOfFit_histogram.pdf", plot = p_hist, width = 8, height = 6)
 
 # Scatterplot of adjusted R^2 values (y) vs M (x).
 p_scatter = ggplot(r2_df_m4, aes(x = n_prods, y = adjR2)) +
@@ -124,3 +124,4 @@ p_scatter = ggplot(r2_df_m4, aes(x = n_prods, y = adjR2)) +
   ylab("Adjusted R2") + xlab("Number of Varibles") + annotation_logticks(sides = "b")
 
 print(p_scatter)
+ggsave("Figures/M4GoodnessOfFit_Scatter.pdf", plot = p_scatter, width = 8, height = 6)

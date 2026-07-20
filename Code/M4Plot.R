@@ -94,7 +94,7 @@ dev.off()
 plot_linear_overall = ggplot(df4plot_long %>% filter(Method %in% c("P:Linear") & dataset != 'Hourly1'),
                              aes(x = Method, y = Ratio)) +
   geom_boxplot(outlier.alpha = 0.05, width = 0.3) + coord_cartesian(ylim = c(ylim_lower,ylim_upper)) + geom_hline(yintercept = 1, col = 'red') +
-  theme_bw() + ylab("Loss Ratio (Pooled Methods/P:Ridgeless)") + theme_slides +
+  theme_bw() + ylab("Loss Ratio (P:Linear/P:Ridgeless)") + theme_slides +
   scale_x_discrete() +
   scale_y_log10() + 
   annotation_logticks(sides = "l")
@@ -124,7 +124,7 @@ dev.off()
 plot_linear_overall = ggplot(df4plot_long %>% filter(Method %in% c("P:GammaSeqDiff") & dataset != 'Hourly1'),
                              aes(x = Method, y = Ratio)) +
   geom_boxplot(outlier.alpha = 0.05, width = 0.3) + coord_cartesian(ylim = c(ylim_lower,ylim_upper)) + geom_hline(yintercept = 1, col = 'red') +
-  theme_bw() + ylab("Loss Ratio (Pooled Methods/P:Ridgeless)") + theme_slides +
+  theme_bw() + ylab("Loss Ratio (P:GammaSeqDiff/P:Ridgeless)") + theme_slides +
   scale_x_discrete() +
   scale_y_log10() + 
   annotation_logticks(sides = "l")
@@ -134,4 +134,6 @@ print(plot_linear_overall)
 pdf("Figures/M4SeqDiff.pdf")
 print(plot_linear_overall) 
 dev.off()
+
+# summary(ratio_all %>% filter(dataset != "Hourly1"))
 
