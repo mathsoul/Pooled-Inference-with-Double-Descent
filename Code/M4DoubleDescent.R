@@ -19,18 +19,17 @@ all_functions <- all_objects[sapply(mget(all_objects, envir = .GlobalEnv), is.fu
 
 # Data Frequency ------------------------------------------------------------
 data_freq = "Monthly"
-# data_freq = "daily"
 
 # Load forecast, truth, and error files for the selected frequency.
-f_data = fread(paste0("ScaledData/", data_freq, "_forecast.csv")) %>% dplyr::select(-V1)
-true_data = fread(paste0("ScaledData/", data_freq, "_truth.csv")) %>% dplyr::select(-V1)
-u_data = fread(paste0("ScaledData/", data_freq, "_err.csv")) %>% dplyr::select(-V1)
+f_data = fread(paste0("CleanedData/M4ScaledData/", data_freq, "_forecast.csv")) %>% dplyr::select(-V1)
+true_data = fread(paste0("CleanedData/M4ScaledData/", data_freq, "_truth.csv")) %>% dplyr::select(-V1)
+u_data = fread(paste0("CleanedData/M4ScaledData/", data_freq, "_err.csv")) %>% dplyr::select(-V1)
 
 rank_vec = 1:8
 methods = c("EW","Linear")
 n_methods = length(methods)
 
-group_size_vec = 4^(1:5)
+group_size_vec = 4^(1:4)
 ratio_mat = NULL
 
 # Number of random shuffle simulations for robustness evaluation.
@@ -72,17 +71,6 @@ for(i in 1:length(rank_vec)){
   colnames(L2_method_mat) = methods
   method_df <- data.frame(id = ordered_ids, L2_method_mat)
   
-  # S:PCR9 ---------------------------------------------------------------
-  # L2_pcr_list <- foreach(p = 1:n_prods, .packages = c("quadprog"), .export = all_functions) %dorng% {
-  #   single_prod_idx <- 1:n_experts + (p - 1) * n_experts
-  #   true_sep <- as.matrix(t(true_comb[p, ]))
-  #   f_sep <- as.matrix(t(f_comb[single_prod_idx, ]))
-  #   suppressMessages(getPCRTestErrAll(f_sep, true_sep, n_components = 9, scale = TRUE))
-  # }
-  # pcr_test_err_std = matrix(unlist(L2_pcr_list), nrow = n_prods, byrow = TRUE)
-  # L2_PCR_mat <- apply(pcr_test_err_std, 1, function(x) mean(x^2, na.rm = TRUE))
-  # PCR_df <- data.frame(id = ordered_ids, S_PCR = L2_PCR_mat)
-  
   # P:Ridgeless ----------------------------------------------------------
   Y_mat = t(apply(u_comb, 2, function(x) sumEachProd(x, n_prods, n_experts)/n_experts))
   Gamma0 = getGamma0(n_experts)
@@ -94,7 +82,7 @@ for(i in 1:length(rank_vec)){
   P_Ridge_df <- data.frame(id = ordered_ids, P_Ridge = L2_ridge0_std)
   
   
-  # S:Ridgeless ----------------------------------------------------------------
+  # S:Ridgeless, namely P:Ridgeless with M = 1 ------------------------------------------------------
   L2_R1_list <- foreach(p = 1:n_prods, .packages = c("tidyverse", "Matrix", "MASS", "quadprog"), .export = all_functions) %dorng% {
     single_prod_idx = 1:n_experts + (p-1) * n_experts
     u_sep = u_comb[single_prod_idx,]
@@ -118,6 +106,7 @@ for(i in 1:length(rank_vec)){
     
     data.frame(id = ordered_ids[p], mse = L2_R1_std)
   }
+  
   R1_df <- do.call(rbind, L2_R1_list) %>% arrange(as.numeric(gsub("\\D", "", id)))
   
   # Store the standardized error matrix from each shuffle simulation.
